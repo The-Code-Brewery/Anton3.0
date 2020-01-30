@@ -134,3 +134,7 @@ dmypy.json
 
 # Secret files
 */*.ini
+
+# OS Specific
+.DS_Store
+*/.DS_Store

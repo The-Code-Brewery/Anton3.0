@@ -15,7 +15,7 @@ from selenium.webdriver.chrome.options import Options
 # Initialize the voice engine
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
-engine.setProperty('rate', 350)
+engine.setProperty('rate', 200)
 engine.setProperty('voice', voices[0].id)  # Setting the voice of the engine as the 0th voice(English)
 
 
