@@ -12,12 +12,13 @@ from selenium import webdriver
 import time
 from selenium.webdriver.chrome.options import Options
 import EmailMining.gmail as gmail
+import database
 
 # Initialize the voice engine
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
-engine.setProperty('rate', 300)
-engine.setProperty('voice', voices[0].id)  # Setting the voice of the engine as the 0th voice(English)
+engine.setProperty('rate', 350)
+engine.setProperty('voice', voices[0].id)  # Setting the voice of the engine as teh 0th voice(English)
 
 
 # Pronounce the text passed
@@ -51,11 +52,11 @@ def wishMe():
     if (hour <= 12):
         speak("Good morning")
     elif (hour <=18):
-        speak("Good evening")
-    else:
         speak("Good afternoon")
+    else:
+        speak("Good evening")
 
-    speak("I am Anton. How may I assist you?")
+    speak("I am Anton. Your Intelligent Product Master. How may I assist you?")
 
 #Function to automate stackoverflow functionality
 def stackoverflowAutomator(ques):
@@ -105,30 +106,19 @@ def stackoverflowAutomator(ques):
     
     else:
         speak("I am really sorry for the issue. Let me direct you to the browser for further assistance")
-        browser=webdriver.Chrome('/Users/pratikbaid/Developer/chromedriver')
+        browser=webdriver.Chrome()
         browser.get(redirectURL)
+        chrome_option = Options()
         chrome_option.add_experimental_option("detach",True)
 
-#Function to automate email functionality
-def emailAutomator(emailRecepient):
-    speak("What is the subject of your mail to "+emailRecepient)
-    subject=takeCommand()
-
-    speak("What is your message for "+emailRecepient)
-    body=takeCommand()
-
-    smtpObj=smtplib.SMTP('smtp.gmail.com',587)
-    smtpObj.ehlo() #Establishing connection success=250
-    smtpObj.starttls()#Step enabline encription success=220
-
-    smtpObj.login('thenameisanton3@gmail.com','pratikbaid@2471')
-    smtpObj.sendmail('thenameisanton3@gmail.com','pratikbaid3@gmail.com','Subject:{}.\n{}'.format(subject,body))
-
 def getMail(query):
+    db = database.Database()
     query = query.split(' ')
     for string in query:
-        if '@' in string:
-            return string
+        if string[0].isupper():
+            email, isPresent = db.getEmailfromPartialName(string)
+            if isPresent:
+                return email
     return None
 
 # 0 : unread
@@ -137,7 +127,11 @@ def getMail(query):
 def emailMining(emailRecepient, flag, last = None):
     speak("Wait for some time till we fetch your emails")
     if flag == 0:
-        response = gmail.get_messages_from_someone(messageFrom=emailRecepient,unread=True,maxResults=1)
+        try:
+            response = gmail.get_messages_from_someone(messageFrom=emailRecepient,unread=True,maxResults=1)
+        except:
+            speak("No unread emails")
+            return
     elif flag == 1:
         response = gmail.get_messages(unread=False, maxResults=5)
     elif flag == 2:
@@ -151,6 +145,58 @@ def emailMining(emailRecepient, flag, last = None):
         speak(f"{getFrom}")
         speak(f"{getSubject}")
 
+flag = False
+def notesAutomator():
+    def make_notes(rec_inst,audio):
+        try:
+            text = rec_inst.recognize_google(audio, language='en-in')
+            print(text)
+            if('stop' in text):
+                global flag
+                flag = True
+                return
+            else:
+                with open("output.txt", "wb") as text_file:
+                    text_file.write(f"{text}\n")
+
+        except Exception as e:
+            global global_terminator_exception
+            global_terminator_exception = True
+
+    r = sr.Recognizer()
+    r.pause_threshold = 1.2
+    mr = sr.Microphone()
+    speak("Starting to make notes...\n")
+    with mr as source:
+        r.adjust_for_ambient_noise(source, duration=1)
+    stopper = r.listen_in_background(mr,make_notes)
+    while(True):
+        if(flag):
+            speak("stopping...")
+            break
+
+#Function to automate email functionality
+def emailAutomator(query):
+    email = getMail(query)
+    if email is not None:
+        db = database.Database()
+        print(email)
+        name, isPresent = db.getNameFromEmail(email)
+        speak("What is the subject of your mail to "+name)
+        subject=takeCommand()
+
+        speak("What is your message for "+name)
+        body=takeCommand()
+
+        smtpObj=smtplib.SMTP('smtp.gmail.com',587)
+        smtpObj.ehlo() #Establishing connection success=250
+        smtpObj.starttls()#Step enabline encription success=220
+
+        smtpObj.login('thenameisanton3@gmail.com','pratikbaid@2471')
+        smtpObj.sendmail('thenameisanton3@gmail.com','{}'.format(email),'Subject:{}.\n{}'.format(subject,body))
+        smtpObj.quit()
+    else:
+        speak("Sorry no such person exists")
 
 running=True
 wishMe()
@@ -174,12 +220,6 @@ def task(query):
     #Logic for automating the email sending process
     elif 'email' in query.lower() or 'mail' in query.lower() or 'message' in query.lower():
         if 'send' in query.lower():
-            if 'email' in query.lower():
-                query=query.replace("send email to","")
-            elif 'message' in query.lower():
-                query=query.replace("send message to ","")
-            else:
-                query=query.replace("send mail to","")
             emailAutomator(query)
         # Email Mining is required
         else:
@@ -191,10 +231,9 @@ def task(query):
             else:
                 emailMining(email, 2)
 
+    elif 'take notes' in query.lower() or 'note' in query.lower() or 'take note' in query.lower() or 'notes' in query.lower():
+        notesAutomator()
 
-    
-
-    #Logic to automating general search
     else:
         speak('Searching the web for '+query)
         results=wikipedia.summary(query,sentences=2)
@@ -211,3 +250,5 @@ while(running==True):
     if 'no' in query.lower() or 'bye' in query.lower() or 'quit' in query.lower() or 'nothing' in query.lower() or 'thank you' in query.lower():
         running=False
         speak('Have a nice day. Good bye')
+
+

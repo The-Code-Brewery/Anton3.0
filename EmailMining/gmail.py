@@ -125,7 +125,6 @@ def get_messages_from_someone(messageFrom, unread = False, maxResults = None):
     result = []
     gmail = Gmail()
     jsonList = json.loads(gmail.get_messages_list(maxResults=maxResults, messageFrom=messageFrom, unread=unread).content)
-    # messages = (gmail.get_specific_message(id='16fd903fe5e8cb9a').content.decode("utf-8"))
     messages = jsonList.get('messages')
     for message in messages:
         id = message.get('id')
