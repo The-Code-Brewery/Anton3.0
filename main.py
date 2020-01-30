@@ -146,7 +146,7 @@ def emailMining(emailRecepient, flag, last = None):
         speak(f"{getSubject}")
 
 flag = False
-def notesAutomator():
+def notesAutomator(date):
     def make_notes(rec_inst,audio):
         try:
             text = rec_inst.recognize_google(audio, language='en-in')
@@ -156,12 +156,11 @@ def notesAutomator():
                 flag = True
                 return
             else:
-                with open("output.txt", "wb") as text_file:
+                with open(f"{date}.txt", "a") as text_file:
                     text_file.write(f"{text}\n")
 
         except Exception as e:
-            global global_terminator_exception
-            global_terminator_exception = True
+            return
 
     r = sr.Recognizer()
     r.pause_threshold = 1.2
@@ -198,6 +197,31 @@ def emailAutomator(query):
     else:
         speak("Sorry no such person exists")
 
+# 0 for yesterday
+# 1 for today
+def readNotesAutomator(flag):
+    speak("Reading your notes")
+    info = 'No such file exists'
+    try:
+        if flag == 0:
+            date = (datetime.datetime.now() - datetime.timedelta(1)).strftime("%B %d, %Y")
+            with open(f"{date}.txt") as f:
+                info = f.readlines()
+                for line in info:
+                    speak(line)
+                return
+        elif flag == 1:
+            date = datetime.datetime.now().strftime("%B %d, %Y")
+            with open(f"{date}.txt") as f:
+                info = f.readlines()
+                for line in info:
+                    speak(line)
+                return
+    except:
+        pass
+    speak(info)
+
+
 running=True
 wishMe()
 
@@ -230,9 +254,18 @@ def task(query):
                 emailMining(email, 1)
             else:
                 emailMining(email, 2)
+    
+    elif 'read' in query.lower() and 'note' in query.lower():
+        if 'yesterday' in query.lower():
+            readNotesAutomator(0)
+        else:
+            readNotesAutomator(1)
 
     elif 'take notes' in query.lower() or 'note' in query.lower() or 'take note' in query.lower() or 'notes' in query.lower():
-        notesAutomator()
+        date = datetime.datetime.now().strftime("%B %d, %Y")
+        with open(f"{date}.txt", "wb") as fileName:
+            pass
+        notesAutomator(date)
 
     else:
         speak('Searching the web for '+query)
@@ -246,9 +279,12 @@ while(running==True):
     speak('What else can I assist you with?')
     query = takeCommand()
     
+    try:
     #Checking if the user wants to ask any further assistance
-    if 'no' in query.lower() or 'bye' in query.lower() or 'quit' in query.lower() or 'nothing' in query.lower() or 'thank you' in query.lower():
+        if 'no' in query.lower() or 'bye' in query.lower() or 'quit' in query.lower() or 'nothing' in query.lower() or 'thank you' in query.lower():
+            running=False
+            speak('Have a nice day. Good bye')
+    except:
         running=False
         speak('Have a nice day. Good bye')
-
 
