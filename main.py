@@ -11,11 +11,12 @@ import re
 from selenium import webdriver
 import time
 from selenium.webdriver.chrome.options import Options
+import EmailMining.gmail as gmail
 
 # Initialize the voice engine
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
-engine.setProperty('rate', 200)
+engine.setProperty('rate', 300)
 engine.setProperty('voice', voices[0].id)  # Setting the voice of the engine as the 0th voice(English)
 
 
@@ -123,6 +124,34 @@ def emailAutomator(emailRecepient):
     smtpObj.login('thenameisanton3@gmail.com','pratikbaid@2471')
     smtpObj.sendmail('thenameisanton3@gmail.com','pratikbaid3@gmail.com','Subject:{}.\n{}'.format(subject,body))
 
+def getMail(query):
+    query = query.split(' ')
+    for string in query:
+        if '@' in string:
+            return string
+    return None
+
+# 0 : unread
+# 1 : from
+# 2 : all
+def emailMining(emailRecepient, flag, last = None):
+    speak("Wait for some time till we fetch your emails")
+    if flag == 0:
+        response = gmail.get_messages_from_someone(messageFrom=emailRecepient,unread=True,maxResults=1)
+    elif flag == 1:
+        response = gmail.get_messages(unread=False, maxResults=5)
+    elif flag == 2:
+        response = gmail.get_messages(maxResults=10)
+    for info in response:
+        getFrom = ''
+        if info.get('from') != None:
+            getFrom = f"From {info.get('from')}"
+        getSubject = f"Subject {info.get('subject')}"
+        speak("Email")
+        speak(f"{getFrom}")
+        speak(f"{getSubject}")
+
+
 running=True
 wishMe()
 
@@ -144,13 +173,26 @@ def task(query):
 
     #Logic for automating the email sending process
     elif 'email' in query.lower() or 'mail' in query.lower() or 'message' in query.lower():
-        if 'email' in query.lower():
-            query=query.replace("send email to","")
-        elif 'message' in query.lower():
-            query=query.replace("send message to ","")
+        if 'send' in query.lower():
+            if 'email' in query.lower():
+                query=query.replace("send email to","")
+            elif 'message' in query.lower():
+                query=query.replace("send message to ","")
+            else:
+                query=query.replace("send mail to","")
+            emailAutomator(query)
+        # Email Mining is required
         else:
-            query=query.replace("send mail to","")
-        emailAutomator(query)
+            email = getMail(query)
+            if 'from' in query.lower():
+                emailMining(email, 0)
+            elif 'unread' in query.lower():
+                emailMining(email, 1)
+            else:
+                emailMining(email, 2)
+
+
+    
 
     #Logic to automating general search
     else:

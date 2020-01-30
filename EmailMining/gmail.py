@@ -1,6 +1,6 @@
 from configparser import ConfigParser
 import requests
-from constants import BASE_URL
+from EmailMining.constants import BASE_URL
 import pickle
 import logging
 import os
@@ -14,7 +14,7 @@ class Gmail:
     @staticmethod
     def get_from_config(item):
 	    config = ConfigParser()
-	    config.read('../secret.ini')
+	    config.read('./secret.ini')
 	    try:
 		    return config.get('Generic',item)
 	    except:
@@ -24,28 +24,13 @@ class Gmail:
         email = self.get_from_config('emailid')
         self.email = email
         content = None
-        try:
-            with open('token.pickle', 'rb') as pickle_file:
-                content = pickle.load(pickle_file)
-        except:
-            # If the pickle file does not exist
-            logging.error("token.pickle file does not exist")
-            os.system(
+        os.system(
                 """
-                python3 quickstart.py
+                python3 EmailMining/quickstart.py
                 """
-            )
-            with open('token.pickle', 'rb') as pickle_file:
-                content = pickle.load(pickle_file)
-        # Token needs to be refreshed
-        if content is None:
-            os.system(
-                """
-                python3 quickstart.py
-                """
-            )
-            with open('token.pickle', 'rb') as pickle_file:
-                content = pickle.load(pickle_file)
+        )
+        with open('EmailMining/token.pickle', 'rb') as pickle_file:
+            content = pickle.load(pickle_file)
         self.headers = {
             'Authorization': f"Bearer {content.token}",
             'Accept': "application/json"
@@ -73,21 +58,23 @@ class Gmail:
         route = "/me/profile"
         return self.get(route = route)
     
-    def get_messages_list(self, maxResults = None, unread = 'unread', messageFrom = None):
+    def get_messages_list(self, maxResults = None, unread = False, messageFrom = None):
         """
         Get a list of messages
         """
         params = []
         queryString = ''
-        if messageFrom is None:
-            queryString = f"is:{unread}"
-        else:
-            queryString = f"from:{messageFrom} is:{unread}"
+        if messageFrom is not None:
+            queryString = queryString + f"from:{messageFrom}"
+        if unread:
+            queryString = queryString + f" is:'unread'"
         if maxResults is not None:
-            params = [('maxResults',maxResults),('q',queryString)]
-        else:
-            params = [('q',queryString)]
+            params = [('maxResults',maxResults)]
+        if queryString is not '':
+            params.append(('q',queryString))
         route = '/me/messages'
+        if params is []:
+            return self.get(route = route)
         return self.get(route = route, params = params)
     
     def get_specific_message(self, id, metadata = False):
@@ -101,15 +88,14 @@ class Gmail:
             return self.get(route = route, params = params)
         return self.get(route = route)
 
-def get_unread_messages(maxResults = None):
+def get_messages(unread = False, maxResults = None):
     """
     Will return from and subject as a dictionary
     """
     # An array of dictionaries with subject and from
     result = []
     gmail = Gmail()
-    jsonList = json.loads(gmail.get_messages_list(maxResults=maxResults).content)
-    # messages = (gmail.get_specific_message(id='16fd903fe5e8cb9a').content.decode("utf-8"))
+    jsonList = json.loads(gmail.get_messages_list(maxResults=maxResults, unread=unread).content)
     messages = jsonList.get('messages')
     for message in messages:
         id = message.get('id')
@@ -119,7 +105,10 @@ def get_unread_messages(maxResults = None):
         for specific in jsonSpecific:
             if specific.get('name') == 'From':
                 emailFrom = specific.get('value')
-                dictRes["from"] = emailFrom[0:emailFrom.index("<")-1]
+                try:
+                    dictRes["from"] = emailFrom[0:emailFrom.index("<")-1]
+                except:
+                    dictRes["from"] = emailFrom
                 continue
             if specific.get('name') == 'Subject':
                 dictRes["subject"] = specific.get('value')
@@ -127,7 +116,7 @@ def get_unread_messages(maxResults = None):
         result.append(dictRes)
     return result
 
-def get_unread_messages_from_someone(messageFrom, maxResults = None):
+def get_messages_from_someone(messageFrom, unread = False, maxResults = None):
     """
     Will return from and subject as a dictionary
     From a certain person
@@ -135,7 +124,7 @@ def get_unread_messages_from_someone(messageFrom, maxResults = None):
     # An array of dictionaries with subject and from
     result = []
     gmail = Gmail()
-    jsonList = json.loads(gmail.get_messages_list(maxResults=maxResults, messageFrom=messageFrom).content)
+    jsonList = json.loads(gmail.get_messages_list(maxResults=maxResults, messageFrom=messageFrom, unread=unread).content)
     # messages = (gmail.get_specific_message(id='16fd903fe5e8cb9a').content.decode("utf-8"))
     messages = jsonList.get('messages')
     for message in messages:
@@ -146,7 +135,10 @@ def get_unread_messages_from_someone(messageFrom, maxResults = None):
         for specific in jsonSpecific:
             if specific.get('name') == 'From':
                 emailFrom = specific.get('value')
-                dictRes["from"] = emailFrom[0:emailFrom.index("<")-1]
+                try:
+                    dictRes["from"] = emailFrom[0:emailFrom.index("<")-1]
+                except:
+                    dictRes["from"] = emailFrom
                 continue
             if specific.get('name') == 'Subject':
                 dictRes["subject"] = specific.get('value')
