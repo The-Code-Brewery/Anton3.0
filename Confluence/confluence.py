@@ -41,7 +41,6 @@ class Confluence:
         """
         Get the API Response
         """
-        print(f"{self.base_url}{route}")
         response = None
         if params is None:
             response = requests.get(
