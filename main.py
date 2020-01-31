@@ -13,12 +13,14 @@ import time
 from selenium.webdriver.chrome.options import Options
 import EmailMining.gmail as gmail
 import database
+import Jira.jira_calls as jc
+import Bitbucket.bitbucket_calls as bc
 
 # Initialize the voice engine
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
-engine.setProperty('rate', 350)
-engine.setProperty('voice', voices[0].id)  # Setting the voice of the engine as teh 0th voice(English)
+engine.setProperty('rate', 180)
+# engine.setProperty('voice', voices[0].id)  # Setting the voice of the engine as teh 0th voice(English)
 
 
 # Pronounce the text passed
@@ -223,14 +225,14 @@ def readNotesAutomator(flag):
 
 
 running=True
-wishMe()
+# wishMe()
 
 #Function that contains all the task
 def task(query):
     #Logic for automation of Stackoverflow
     if 'stackoverflow' in query.lower() or 'stack overflow' in query.lower() or 'error' in query.lower() or 'solve' in query.lower() or 'problem' in query.lower() or 'exception' in query.lower():
         speak('Searching Stackoverflow...')
-        query=query.replace("stackoverflow","")
+        query=query.replace("search stackoverflow for","")
         print(query)
         stackoverflowAutomator(query)
     
@@ -254,6 +256,8 @@ def task(query):
                 emailMining(email, 1)
             else:
                 emailMining(email, 2)
+
+    # Read notes
     
     elif 'read' in query.lower() and 'note' in query.lower():
         if 'yesterday' in query.lower():
@@ -261,11 +265,79 @@ def task(query):
         else:
             readNotesAutomator(1)
 
+    # Make notes
+
     elif 'take notes' in query.lower() or 'note' in query.lower() or 'take note' in query.lower() or 'notes' in query.lower():
         date = datetime.datetime.now().strftime("%B %d, %Y")
         with open(f"{date}.txt", "wb") as fileName:
             pass
         notesAutomator(date)
+
+    # BitBucket
+
+    elif 'commit' in query.lower() and 'last' in query.lower():
+        bc.get_last_commit("thenameisanton3","anton",speak)
+
+    elif ( 'pull' in query.lower() or 'request' in query.lower() ) and 'last' in query.lower():
+        bc.get_last_pullrequest("thenameisanton3","anton",speak)        
+
+    # JIRA
+
+        #> main trigger words:
+            #1 issue
+            #2 status of
+            #3 latest
+            #4 all
+
+        #> scope trigger words:
+            #1 in / from
+            #2 me / my
+
+    ## project 
+
+    ### project status
+    elif 'status of' in query.lower():
+        jc.project_status("AN",speak)
+
+    ## issues
+
+    ### get latest or recent issue
+    elif 'latest' in query.lower() and 'issue' in query.lower():
+        #### get latest issue assigned to user in a project
+        if ( 'in' in query.lower() or 'from' in query.lower() ) and ( 'my' in query.lower() or 'me ' in query.lower() ):
+            if 'ant' in query.lower() or 'anton' in query.lower() or 'ton' in query.lower():
+                jc.all_my_issues_in_latest("AN",speak)
+            else:
+                jc.all_my_issues_in_latest("PAIM",speak)
+        #### get latest issue assigned to user in any project
+        elif ( 'my' in query.lower() or 'me ' in query.lower() ):
+            jc.all_my_issues_latest(speak)
+        #### get latest issue in a project
+        elif ( 'in' in query.lower() or 'from' in query.lower() ):
+            if 'ant' in query.lower() or 'anton' in query.lower() or 'ton' in query.lower():
+                jc.all_issues_in_latest("AN",speak)
+            else:
+                jc.all_issues_in_latest("PAIM",speak)
+
+    ### get all issues assigned to a user in a project
+    elif 'all' in query.lower() and 'issues' in query.lower() and ( 'in' in query.lower() or 'from' in query.lower() ) and ( 'me' in query.lower() or 'my' in query.lower() ):
+        if 'ant' in query.lower() or 'anton' in query.lower() or 'ton' in query.lower():
+            jc.all_my_issues_in("AN",speak)
+        else:
+            jc.all_my_issues_in("PAIM",speak)
+
+    ### get all issues assigned to a user in any project
+    elif 'all' in query.lower() and 'issues' in query.lower() and ( 'me' in query.lower() or 'my' in query.lower() ):
+        jc.all_my_issues(speak)
+
+    ### get all issues in a project
+    elif 'all' in query.lower() and 'issues' in query.lower() and ( 'in' in query.lower() or 'from' in query.lower() ):
+        if 'ant' in query.lower() or 'anton' in query.lower() or 'ton' in query.lower():
+            jc.all_issues_in("AN",speak)
+        else:
+            jc.all_issues_in("PAIM",speak)
+
+    # Otherwise
 
     else:
         speak('Searching the web for '+query)

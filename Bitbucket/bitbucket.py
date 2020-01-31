@@ -9,7 +9,10 @@ class BitbucketAPI(AtlassianRestAPI):
 	def get_from_config(item):
 
 		config = ConfigParser()
-		config.read('../secret.ini')
+		try:
+			config.read('./secret.ini')
+		except:
+			config.read('../secret.ini')
 		try:
 			return config.get('Bitbucket',item)
 		except:
@@ -152,3 +155,38 @@ class BitbucketAPI(AtlassianRestAPI):
 		else:
 			url = '2.0/users/{0}/search/code'.format(user)
 		return self.get(url,params=params) or {}
+
+	def get_user_repo_commits(self,workspace,repo_slug):
+		if not self.cloud:
+			url = f'1.0/repositories/{workspace}/{repo_slug}/commits/'
+		else:
+			url = f'2.0/repositories/{workspace}/{repo_slug}/commits/'
+		return self.get(url) or {}
+
+	def get_user_repo_commit(self,workspace,repo_slug,commit_hash):
+		if not self.cloud:
+			url = f'1.0/repositories/{workspace}/{repo_slug}/commit/{commit_hash}'
+		else:
+			url = f'2.0/repositories/{workspace}/{repo_slug}/commit/{commit_hash}'
+		return self.get(url) or {}
+
+	def get_user_repo_commit_diff(self,workspace,repo_slug,commit_hash):
+		if not self.cloud:
+			url = f'1.0/repositories/{workspace}/{repo_slug}/diff/{commit_hash}'
+		else:
+			url = f'2.0/repositories/{workspace}/{repo_slug}/diff/{commit_hash}'
+		return self.get(url) or {}
+
+	def get_user_repo_downloads(self,workspace,repo_slug):
+		if not self.cloud:
+			url = f'1.0/repositories/{workspace}/{repo_slug}/downloads'
+		else:
+			url = f'2.0/repositories/{workspace}/{repo_slug}/downloads'
+		return self.get(url) or {}
+
+	def get_user_repo_pullrequests(self,workspace,repo_slug):
+		if not self.cloud:
+			url = f'1.0/repositories/{workspace}/{repo_slug}/pullrequests'
+		else:
+			url = f'2.0/repositories/{workspace}/{repo_slug}/pullrequests'
+		return self.get(url) or {}
