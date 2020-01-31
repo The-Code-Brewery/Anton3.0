@@ -230,6 +230,27 @@ def readNotesAutomator(flag):
         pass
     speak(info)
 
+def emailAutomatorDetailMail(subject,body):
+    smtpObj=smtplib.SMTP('smtp.gmail.com',587)
+    smtpObj.ehlo() #Establishing connection success=250
+    smtpObj.starttls()#Step enabline encription success=220
+    smtpObj.login('thenameisanton3@gmail.com','pratikbaid@2471')
+    smtpObj.sendmail('thenameisanton3@gmail.com','pratikbaid3@gmail.com','Subject:{}.\n{}'.format(subject,body))
+    smtpObj.quit()
+    speak("Mail sent")
+
+
+#Function that sends the user mail with the JIRA and confluence detail
+def emailMeAutomator(query):
+    speak("Sending you the email")
+    # BitBucket
+    if query is None:
+        speak("Sorry, I didnt get that")
+    elif 'commit' in query.lower() and 'last' in query.lower():
+        bc.get_last_commit_for_email("thenameisanton3","anton",emailAutomatorDetailMail)
+    elif ('pull' in query.lower() or 'full' in query.lower() or'request' in query.lower()) and 'last' in query.lower():
+        bc.get_last_pullrequest_for_email("thenameisanton3","anton",emailAutomatorDetailMail)
+
 
 running=True
 wishMe()
@@ -256,6 +277,9 @@ def task(query):
         except:
             results="Sorry we cannot find any match"
         speak(results)
+
+    elif 'me a mail' in query.lower() or 'me a email' in query.lower():
+        emailMeAutomator(query)
 
     #Logic for automating the email sending process
     elif 'email' in query.lower() or 'mail' in query.lower() or 'message' in query.lower():
