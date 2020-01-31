@@ -19,7 +19,7 @@ import Bitbucket.bitbucket_calls as bc
 # Initialize the voice engine
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
-engine.setProperty('rate', 280)
+engine.setProperty('rate', 200)
 engine.setProperty('voice', voices[7].id)  # Setting the voice of the engine as teh 0th voice(English)
 
 
@@ -94,15 +94,21 @@ def stackoverflowAutomator(ques):
     geta=soup4.find("div",{"class":"answercell"}) #Answer to the first question.
     r=geta.find(class_="post-text")
     z=r.find("p").get_text().strip()
+    w=r.find("pre")
+    for i in w.find_all("code"):
+        c=i.text.strip()
+        z+="\n"+c
     z=re.sub(r'[ \n]{3,}','',z)
     print(z)
     speak(z) #Speaking the first line of the best answer
 
 
     #Checking if the bot is able to solve the problem, if not it opens the browser
-    speak("Did this solve your problem")
-    reply=takeCommand()
-
+    reply = None
+    while(reply is None):
+        speak("Did this solve your problem")
+        reply=takeCommand()
+    
     if 'yes' in reply.lower():
         speak("I am glad that I could be of some assistance")
     
@@ -144,7 +150,8 @@ def emailMining(emailRecepient, flag, last = None):
             getFrom = f"From {info.get('from')}"
         getSubject = f"Subject {info.get('subject')}"
         speak("Email")
-        speak(f"{getFrom}")
+        if getFrom != '':
+            speak(f"{getFrom}")
         speak(f"{getSubject}")
 
 flag = False
@@ -243,7 +250,11 @@ def task(query):
     elif 'wikipedia' in query.lower() or 'who is' in query.lower() or 'what is' in query.lower() or 'where is' in query.lower():
         speak('Searching Wikipedia...')
         query = query.replace("wikipedia","")
-        results=wikipedia.summary(query,sentences=2)
+        results=""
+        try:
+            results=wikipedia.summary(query,sentences=2)
+        except:
+            results="Sorry we cannot find any match"
         speak(results)
 
     #Logic for automating the email sending process
@@ -353,13 +364,11 @@ while(running==True):
     task(query)
     speak('What else can I assist you with?')
     query = takeCommand()
-    
     try:
     #Checking if the user wants to ask any further assistance
-        if 'no' in query.lower() or 'bye' in query.lower() or 'quit' in query.lower() or 'nothing' in query.lower() or 'thank you' in query.lower():
+        if 'bye' in query.lower() or 'quit' in query.lower() or 'nothing' in query.lower() or 'thank you' in query.lower():
             running=False
             speak('Have a nice day. Good bye')
     except:
-        running=False
-        speak('Have a nice day. Good bye')
+        speak("Sorry, could you repeat ?")
 
