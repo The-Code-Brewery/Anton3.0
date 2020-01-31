@@ -19,8 +19,8 @@ import Bitbucket.bitbucket_calls as bc
 # Initialize the voice engine
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
-engine.setProperty('rate', 180)
-# engine.setProperty('voice', voices[0].id)  # Setting the voice of the engine as teh 0th voice(English)
+engine.setProperty('rate', 280)
+engine.setProperty('voice', voices[7].id)  # Setting the voice of the engine as teh 0th voice(English)
 
 
 # Pronounce the text passed
@@ -225,10 +225,13 @@ def readNotesAutomator(flag):
 
 
 running=True
-# wishMe()
+wishMe()
 
 #Function that contains all the task
 def task(query):
+    if query is None:
+        speak("Sorry could not hear you")
+        return
     #Logic for automation of Stackoverflow
     if 'stackoverflow' in query.lower() or 'stack overflow' in query.lower() or 'error' in query.lower() or 'solve' in query.lower() or 'problem' in query.lower() or 'exception' in query.lower():
         speak('Searching Stackoverflow...')
