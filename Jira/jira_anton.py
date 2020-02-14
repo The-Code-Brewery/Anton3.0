@@ -72,14 +72,3 @@ class AntonJira():
 		]
 		"""
 		return self.jira_instance.search_issues(f"assignee=currentuser()")
- 
-# jira = JIRA('https://anton3.atlassian.net',basic_auth=('thenameisanton3@gmail.com', 'TKLhcdc5zw2anmiX8DQ946BD'))
-# jra = jira.project('AN')
-# print(jra.name)              
-# print(jra.lead.displayName)    
- 
-# email:thenameisanton3@gmail.com
-# password: pratikbaid@2471
-
-# jira = AntonJira('https://anton3.atlassian.net','thenameisanton3@gmail.com', 'TKLhcdc5zw2anmiX8DQ946BD')
-# print(jira.get_issues_of_current_user('AN'))
